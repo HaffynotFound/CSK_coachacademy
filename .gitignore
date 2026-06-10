@@ -12,6 +12,10 @@ dist
 dist-ssr
 *.local
 
+# Large video assets — serve from CDN instead
+public/output_vids/
+public/outputs/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
