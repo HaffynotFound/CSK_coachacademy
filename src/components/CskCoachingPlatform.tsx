@@ -39,7 +39,7 @@ const S = { // shared styles
 };
 
 // ─── DATA ─────────────────────────────────────────────────────────────────────
-const STUDENTS = [
+const DEFAULT_STUDENTS = [
   {id:1,name:"Deepak Chahar",initials:"DC",role:"Fast",avatar:"🏏",sessions:12,avgSpeed:138,topSpeed:142,economy:7.2},
   {id:2,name:"Tushar Deshpande",initials:"TD",role:"Fast-Medium",avatar:"🏏",sessions:9,avgSpeed:133,topSpeed:138,economy:8.1},
   {id:3,name:"Matheesha Pathirana",initials:"MP",role:"Fast",avatar:"🏏",sessions:14,avgSpeed:141,topSpeed:147,economy:6.8},
@@ -226,7 +226,7 @@ function CoachHome({onNav}){
         <div style={S.h1}>Coach Dhruv</div>
         <div style={S.sub}>27 May 2026 · Chepauk</div>
         <div style={{display:"flex",gap:10,marginTop:16}}>
-          {[{l:"Total Students",v:STUDENTS.length},{l:"Sessions",v:SESSIONS_DATA.length},{l:"Live Now",v:ongoing.length}].map(s=>(
+          {[{l:"Total Students",v:DEFAULT_STUDENTS.length},{l:"Sessions",v:SESSIONS_DATA.length},{l:"Live Now",v:ongoing.length}].map(s=>(
             <div key={s.l} style={{flex:1,background:"rgba(10,37,71,.06)",borderRadius:12,
               border:`1px solid ${C.goldD}`,padding:"10px 8px",textAlign:"center"}}>
               <div style={{fontFamily:"monospace",fontSize:20,fontWeight:700,color:s.l==="Live Now"?C.red:C.gold}}>{s.v}</div>
@@ -280,10 +280,10 @@ function CoachHome({onNav}){
         {/* Students */}
         <Section title="MY STUDENTS" action={{label:"View all",fn:()=>onNav("students")}}>
           <div style={{display:"flex",gap:10,overflowX:"auto",paddingBottom:4}}>
-            {STUDENTS.slice(0,5).map(s=>(
-              <div key={s.id} onClick={()=>onNav("studentReport",s)}
+            {DEFAULT_STUDENTS.map(s=>(
+              <div key={s.id}
                 style={{minWidth:76,background:C.card,border:`1px solid ${C.goldD}`,borderRadius:14,
-                  padding:"12px 8px",textAlign:"center",cursor:"pointer",flexShrink:0}}>
+                  padding:"12px 8px",textAlign:"center",flexShrink:0}}>
                 <Avatar initials={s.initials} size={38}/>
                 <div style={{fontSize:10,fontWeight:700,color:C.white,marginTop:6,lineHeight:1.3}}>{s.name.split(" ")[0]}</div>
                 <div style={{fontSize:9,color:C.muted,marginTop:2}}>{s.role}</div>
@@ -369,7 +369,7 @@ function CreateSession({onBack,onNav}){
         {step===1&&(
           <>
             <div style={{...S.sub,marginBottom:12}}>Select students for this session ({selected.length} selected)</div>
-            {STUDENTS.map(s=>{
+            {DEFAULT_STUDENTS.map(s=>{
               const on=selected.includes(s.id);
               return(
                 <div key={s.id} onClick={()=>toggle(s.id)} style={{...S.card,marginBottom:10,cursor:"pointer",
@@ -406,8 +406,8 @@ function CreateSession({onBack,onNav}){
               <StatRow label="Students" value={selected.length} accent/>
               <StatRow label="Camera Mode" value={cameraMode===3?"3 Cameras · Multi-angle":"1 Camera · Side-on"}/>
             </Card>
-            <div style={{...S.sectionTitle}}>SELECTED STUDENTS</div>
-            {STUDENTS.filter(s=>selected.includes(s.id)).map(s=>(
+            <div style={{...S.sectionTitle}}>SELECTED DEFAULT_STUDENTS</div>
+            {DEFAULT_STUDENTS.filter(s=>selected.includes(s.id)).map(s=>(
               <div key={s.id} style={{display:"flex",alignItems:"center",gap:10,marginBottom:10}}>
                 <Avatar initials={s.initials} size={36} active/>
                 <div>
@@ -441,7 +441,7 @@ function CreateSession({onBack,onNav}){
 // COACH — RECORD SESSION (live recording flow)
 // ═══════════════════════════════════════════════════════════════════════════════
 function RecordSession({onBack,onNav}){
-  const [activeStu,setActiveStu]=useState(STUDENTS[0]);
+  const [activeStu,setActiveStu]=useState(DEFAULT_STUDENTS[0]);
   const [isRec,setIsRec]=useState(false);
   const [timer,setTimer]=useState(0);
   const timerRef=useRef(null);
@@ -463,7 +463,7 @@ function RecordSession({onBack,onNav}){
     onNav("coachingNote");
   };
 
-  const selectedStudents=STUDENTS.filter(s=>SESSION.selectedStudentIds.includes(s.id));
+  const selectedStudents=DEFAULT_STUDENTS.filter(s=>SESSION.selectedStudentIds.includes(s.id));
   const cm=SESSION.cameraMode||1;
   const angles=CAMERA_ANGLES[cm]||CAMERA_ANGLES[1];
   const ballsThisStu=SESSION.ballsLogged.filter(b=>b.student===activeStu.initials).length;
@@ -809,7 +809,7 @@ function SessionCalibration({onBack,onNav}){
 // ═══════════════════════════════════════════════════════════════════════════════
 function CoachingNote({onBack,onNav,studentId}){
   const sid=studentId??SESSION._pendingStuId;
-  const student=STUDENTS.find(s=>s.id===sid)||STUDENTS[0];
+  const student=DEFAULT_STUDENTS.find(s=>s.id===sid)||DEFAULT_STUDENTS[0];
   useEffect(()=>{SESSION._pendingStuId=undefined;},[]);
   const [note,setNote]=useState("");
   const [mediaRecorder,setMediaRecorder]=useState(null);
@@ -953,7 +953,7 @@ function SessionReview({onNav}){
   const [openBowler,setOpenBowler]=useState(null);
   const [balls,setBalls]=useState([...SESSION.ballsLogged]);
 
-  const selectedStudents=STUDENTS.filter(s=>SESSION.selectedStudentIds.includes(s.id));
+  const selectedStudents=DEFAULT_STUDENTS.filter(s=>SESSION.selectedStudentIds.includes(s.id));
 
   const deleteBall=(ballId)=>{
     SESSION.ballsLogged=SESSION.ballsLogged.filter(b=>b.id!==ballId);
@@ -1074,7 +1074,7 @@ function SessionEnded({onNav}){
           </div>
         </Card>
         <div style={{...S.sectionTitle}}>STUDENT SUMMARY</div>
-        {STUDENTS.filter(s=>SESSION.selectedStudentIds.includes(s.id)).map(s=>{
+        {DEFAULT_STUDENTS.filter(s=>SESSION.selectedStudentIds.includes(s.id)).map(s=>{
           const bws=SESSION.ballsLogged.filter(b=>b.student===s.initials);
           return(
             <Card key={s.id} style={{marginBottom:10}}>
@@ -1102,7 +1102,7 @@ function SessionEnded({onNav}){
 // ═══════════════════════════════════════════════════════════════════════════════
 function SessionAnalysisPage({onNav}){
   const [openBowler,setOpenBowler]=useState(null);
-  const selectedStudents=STUDENTS.filter(s=>SESSION.selectedStudentIds.includes(s.id));
+  const selectedStudents=DEFAULT_STUDENTS.filter(s=>SESSION.selectedStudentIds.includes(s.id));
   const balls=[...SESSION.ballsLogged];
 
   const bowlerBalls=(student)=>balls.filter(b=>b.student===student.initials);
@@ -1271,9 +1271,9 @@ function SessionDetail({session,onBack,onNav}){
           <StatRow label="Total balls" value={s.deliveries} accent/>
           <StatRow label="Students" value={s.students} accent/>
         </Card>
-        <Section title="STUDENTS IN THIS SESSION">
-          {STUDENTS.slice(0,s.students).map(st=>(
-            <Card key={st.id} style={{marginBottom:10}} onClick={()=>onNav("studentReport",st)}>
+        <Section title="DEFAULT_STUDENTS IN THIS SESSION">
+          {DEFAULT_STUDENTS.slice(0,s.students).map(st=>(
+            <Card key={st.id} style={{marginBottom:10}}>
               <div style={{display:"flex",alignItems:"center",gap:12}}>
                 <Avatar initials={st.initials} size={40}/>
                 <div style={{flex:1}}>
@@ -1298,11 +1298,28 @@ function SessionDetail({session,onBack,onNav}){
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// COACH — ALL STUDENTS
+// COACH — ALL DEFAULT_STUDENTS
 // ═══════════════════════════════════════════════════════════════════════════════
 function AllStudents({onBack,onNav}){
   const [search,setSearch]=useState("");
-  const filtered=STUDENTS.filter(s=>s.name.toLowerCase().includes(search.toLowerCase()));
+  const [students,setStudents]=useState(DEFAULT_STUDENTS);
+  const [showAdd,setShowAdd]=useState(false);
+  const [newName,setNewName]=useState("");
+  const [newRole,setNewRole]=useState("Fast");
+
+  const addStudent=()=>{
+    if(!newName.trim())return;
+    const words=newName.trim().split(" ");
+    const initials=words.map(w=>w[0]).join("").toUpperCase();
+    const id=Math.max(...students.map(s=>s.id),0)+1;
+    setStudents([...students,{
+      id,name:newName.trim(),initials,role:newRole,avatar:"🏏",
+      sessions:0,avgSpeed:0,topSpeed:0,economy:0,
+    }]);
+    setNewName("");setShowAdd(false);
+  };
+
+  const filtered=students.filter(s=>s.name.toLowerCase().includes(search.toLowerCase()));
   return(
     <div style={{flex:1,display:"flex",flexDirection:"column",background:C.navy,minHeight:"100%",paddingBottom:74}}>
       <TopBar title="Students" onBack={onBack}/>
@@ -1312,21 +1329,48 @@ function AllStudents({onBack,onNav}){
             style={{...S.input,paddingLeft:36}}/>
           <span style={{position:"absolute",left:12,top:"50%",transform:"translateY(-50%)",color:C.muted,fontSize:14}}>🔍</span>
         </div>
+        <button onClick={()=>setShowAdd(!showAdd)}
+          style={{...S.btn(showAdd?"danger":"gold"),marginTop:10,fontSize:12,padding:"10px 0"}}>
+          {showAdd?"Cancel":`+ Add New Student`}
+        </button>
+        {showAdd&&(
+          <div style={{...S.card,marginTop:10}}>
+            <label style={S.label}>FULL NAME</label>
+            <input value={newName} onChange={e=>setNewName(e.target.value)}
+              placeholder="e.g. Rahul Sharma" style={{...S.input,marginBottom:10}}/>
+            <label style={S.label}>ROLE</label>
+            <select value={newRole} onChange={e=>setNewRole(e.target.value)}
+              style={{...S.input,marginBottom:10,colorScheme:"dark",cursor:"pointer"}}>
+              <option>Fast</option><option>Fast-Medium</option><option>Medium</option>
+              <option>Spin</option><option>Batter</option><option>All-rounder</option>
+            </select>
+            <button onClick={addStudent} disabled={!newName.trim()}
+              style={{...S.btn(),opacity:newName.trim()?1:.4,cursor:newName.trim()?"pointer":"not-allowed"}}>
+              Add Student
+            </button>
+          </div>
+        )}
       </div>
       <div style={{flex:1,overflowY:"auto",padding:"0 16px 16px"}}>
+        {filtered.length===0&&(
+          <div style={{textAlign:"center",padding:"32px 16px",color:C.muted,fontSize:12}}>
+            No students found. Add one above.
+          </div>
+        )}
         {filtered.map(s=>(
-          <Card key={s.id} style={{marginBottom:10}} onClick={()=>onNav("studentReport",s)}>
+          <Card key={s.id} style={{marginBottom:10}}>
             <div style={{display:"flex",alignItems:"center",gap:12}}>
               <Avatar initials={s.initials} size={44}/>
               <div style={{flex:1}}>
                 <div style={S.h3}>{s.name}</div>
-                <div style={S.sub}>{s.role} · {s.sessions} sessions</div>
+                <div style={S.sub}>{s.role}{s.sessions>0?` · ${s.sessions} sessions`:""}</div>
               </div>
-              <div style={{textAlign:"right"}}>
-                <div style={{fontFamily:"monospace",fontSize:15,fontWeight:700,color:C.gold}}>{s.avgSpeed}</div>
-                <div style={{fontSize:9,color:C.muted}}>km/h avg</div>
-              </div>
-              <span style={{fontSize:16,color:C.muted}}>›</span>
+              {s.avgSpeed>0&&(
+                <div style={{textAlign:"right"}}>
+                  <div style={{fontFamily:"monospace",fontSize:15,fontWeight:700,color:C.gold}}>{s.avgSpeed}</div>
+                  <div style={{fontSize:9,color:C.muted}}>km/h avg</div>
+                </div>
+              )}
             </div>
           </Card>
         ))}
@@ -1342,7 +1386,7 @@ function AllStudents({onBack,onNav}){
 // SHARED — STUDENT REPORT (Coach & Student both land here)
 // ═══════════════════════════════════════════════════════════════════════════════
 function StudentReport({student,onBack,onNav,isStudent=false}){
-  const st=student||STUDENTS[0];
+  const st=student||DEFAULT_STUDENTS[0];
   const [activeSession,setActiveSession]=useState(null);
   if(activeSession) return <SessionBallsView student={st} session={activeSession} onBack={()=>setActiveSession(null)}/>;
 
@@ -1585,7 +1629,7 @@ function BallDetail({ball,onBack}){
 // STUDENT HOME
 // ═══════════════════════════════════════════════════════════════════════════════
 function StudentHome({onNav}){
-  const me=STUDENTS[0];
+  const me=DEFAULT_STUDENTS[0];
   return(
     <div style={{flex:1,display:"flex",flexDirection:"column",background:C.navy,minHeight:"100%",paddingBottom:74}}>
       <div style={{background:`radial-gradient(ellipse at 20% 30%,#DCE9F7,${C.midnight})`,
@@ -1903,7 +1947,7 @@ function CoachProfile({onNav,onLogout}){
         </div>
         {/* Quick stats */}
         <div style={{display:"flex",gap:10,marginTop:16}}>
-          {[{l:"Students",v:STUDENTS.length},{l:"Sessions",v:SESSIONS_DATA.length},{l:"Deliveries",v:248}].map(s=>(
+          {[{l:"Students",v:DEFAULT_STUDENTS.length},{l:"Sessions",v:SESSIONS_DATA.length},{l:"Deliveries",v:248}].map(s=>(
             <div key={s.l} style={{flex:1,background:"rgba(10,37,71,.08)",borderRadius:12,
               border:`1px solid ${C.goldD}`,padding:"9px 6px",textAlign:"center"}}>
               <div style={{fontFamily:"monospace",fontSize:18,fontWeight:700,color:C.gold}}>{s.v}</div>
@@ -1959,7 +2003,7 @@ function CoachProfile({onNav,onLogout}){
 // STUDENT PROFILE
 // ═══════════════════════════════════════════════════════════════════════════════
 function StudentProfile({onNav,onLogout}){
-  const me=STUDENTS[0];
+  const me=DEFAULT_STUDENTS[0];
   const MENU=[
     {icon:"📊",label:"My Stats",sub:"Speed trends and skill radar",to:"dashboard"},
     {icon:"📋",label:"My Sessions",sub:"All recorded sessions",to:"sessions"},
@@ -2103,12 +2147,12 @@ export default function App(){
       case "uploadVideo": return <UploadVideo onBack={back} onNav={(s)=>nav(s)}/>;
       case "sessions": return role==="coach"
         ? <AllSessions onBack={back} onNav={(s,d)=>nav(s,d||{})}/>
-        : <StudentReport student={STUDENTS[0]} onBack={back} onNav={(s)=>nav(s)} isStudent/>;
+        : <StudentReport student={DEFAULT_STUDENTS[0]} onBack={back} onNav={(s)=>nav(s)} isStudent/>;
       case "sessionDetail": return <SessionDetail session={ctx.id?ctx:null} onBack={back} onNav={(s,d)=>nav(s,d||{})}/>;
       case "students": return <AllStudents onBack={back} onNav={(s,d)=>nav(s,d||{})}/>;
-      case "studentReport": return <StudentReport student={ctx.initials?ctx:STUDENTS[0]} onBack={back} onNav={(s)=>nav(s)} isStudent={role==="student"}/>;
+      case "studentReport": return <StudentReport student={ctx.initials?ctx:DEFAULT_STUDENTS[0]} onBack={back} onNav={(s)=>nav(s)} isStudent={role==="student"}/>;
       case "studentHome": return <StudentHome onNav={(s)=>nav(s)}/>;
-      case "dashboard": return <StudentReport student={STUDENTS[0]} onBack={back} onNav={(s)=>nav(s)} isStudent/>;
+      case "dashboard": return <StudentReport student={DEFAULT_STUDENTS[0]} onBack={back} onNav={(s)=>nav(s)} isStudent/>;
       case "profile": return role==="coach"
         ? <CoachProfile onNav={(s)=>nav(s)} onLogout={()=>{setRole(null);setHistory([]);setCtx({});setScreen("login");}}/>
         : <StudentProfile onNav={(s)=>nav(s)} onLogout={()=>{setRole(null);setHistory([]);setCtx({});setScreen("login");}}/>;
