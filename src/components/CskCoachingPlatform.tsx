@@ -132,6 +132,152 @@ const Section = ({title,children,action})=>(
   </div>
 );
 
+const LENGTH_ZONES=["Full Toss","Yorker","The Slot","Good Length","Short"];
+const ZONE_TINT={
+  0:"rgba(255,176,184,0.5)",  1:"rgba(226,239,112,0.45)",  2:"rgba(255,201,146,0.5)",
+  3:"rgba(168,230,160,0.45)",  4:"rgba(194,214,191,0.45)",
+};
+const DOT_COLORS=["#FF4444","#FFD700","#33CC33","#4488FF","#AA66FF"];
+
+const seed=(n)=>{const x=Math.sin(n*12.9898)*43758.5453;return x-Math.floor(x);};
+
+function assignBallsToZones(balls,role,dotCount=12){
+  const count=balls.length;
+  if(count===0)return[];
+  const base=role==="Spin"?[5,15,35,30,15]:[5,15,15,40,25];
+  const jitter=()=>Math.round((Math.random()-0.5)*6);
+  let raw=base.map(v=>Math.max(0,v+jitter()));
+  const t=raw.reduce((a,b)=>a+b,0);
+  let pcts=raw.map(v=>Math.round(v/t*100));
+  pcts[pcts.length-1]+=100-pcts.reduce((a,b)=>a+b,0);
+  let targets=[0,0,0,0,0];
+  targets[0]=1;
+  targets[1]=Math.min(2,Math.max(0,dotCount-1));
+  let remaining=dotCount-targets[0]-targets[1];
+  if(remaining>0){
+    const exact=pcts.map(p=>p*remaining/100);
+    let extra=exact.map(v=>Math.floor(v));
+    let sum=extra.reduce((a,b)=>a+b,0);
+    let leftover=remaining-sum;
+    if(leftover>0){
+      const rems=exact.map((v,i)=>({idx:i,frac:v-Math.floor(v)}));
+      rems.sort((a,b)=>b.frac-a.frac);
+      for(let i=0;i<leftover&&i<rems.length;i++)extra[rems[i].idx]++;
+    }
+    for(let i=0;i<5;i++)targets[i]+=extra[i];
+  }
+  let dotId=0;
+  const result=[];
+  targets.forEach((n,zoneIdx)=>{
+    for(let j=0;j<n;j++){
+      result.push({id:dotId++,speed:0,zoneIdx});
+    }
+  });
+  return LENGTH_ZONES.map((zone,i)=>({
+    zone, pct:pcts[i],
+    balls:result.filter(b=>b.zoneIdx===i).map((b,j)=>({...b,pos:j})),
+  }));
+}
+
+const PITCH_W=170;
+const PITCH_H=380;
+const ZH=72;
+const ZONES_TOP=[8,80,152,224,296];
+
+const PitchLengthChart = ({balls,role,dotCount=15})=>{
+  if(!balls||balls.length===0)return null;
+  const dist=assignBallsToZones(balls,role,dotCount);
+  if(!dist)return null;
+  return(
+    <div style={{marginTop:12,padding:"10px 8px 8px",background:"rgba(10,37,71,.03)",borderRadius:12,border:`1px solid ${C.faint}`}}>
+      <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:8}}>
+        <span style={{fontSize:13}}>🏏</span>
+        <span style={{...S.h3,fontSize:11}}>PITCH LENGTH DISTRIBUTION</span>
+        <span style={{...S.sub,fontSize:9,marginLeft:"auto"}}>{balls.length} del.</span>
+      </div>
+      <div style={{display:"flex",gap:0,position:"relative",height:PITCH_H}}>
+        {/* ── distance markers ── */}
+        <div style={{width:38,flexShrink:0,paddingTop:12}}>
+          {[{l:"STUMPS",t:1},{l:"2M",t:77},{l:"4M",t:149},{l:"6M",t:221},{l:"8M",t:293},{l:"HALFWAY",t:365}].map(m=>(
+            <div key={m.l} style={{position:"absolute",left:2,top:m.t,fontSize:7,fontWeight:700,color:"rgba(10,37,71,.5)",letterSpacing:.5}}>
+              {m.l}
+            </div>
+          ))}
+        </div>
+
+        {/* ── pitch canvas ── */}
+        <div style={{position:"relative",width:PITCH_W+24,height:PITCH_H,overflow:"hidden",borderRadius:8}}>
+          {/* green outfield */}
+          <div style={{position:"absolute",inset:0,background:"radial-gradient(ellipse at 50% 50%,#4A9C5E,#367348)"}}/>
+          {/* pitch strip */}
+          <div style={{position:"absolute",left:"50%",marginLeft:-60,top:0,width:120,height:PITCH_H,
+            background:"linear-gradient(180deg,#D4B896 0%,#C8AD85 20%,#C4A87E 40%,#C8AD85 60%,#D4B896 100%)",
+            borderRadius:4,border:"1px solid rgba(0,0,0,.08)"}}/>
+
+          {/* zone bands */}
+          {dist.map((d,i)=>{
+            const top=ZONES_TOP[i];
+            return(
+              <div key={d.zone} style={{position:"absolute",left:"50%",marginLeft:-60,top,width:120,height:ZH,
+                background:ZONE_TINT[i],zIndex:3,
+                borderBottom:i<4?`1px solid rgba(0,0,0,.07)`:"none"}}>
+                {/* dot cluster — constrained within zone boundaries */}
+                {d.balls.map((b,j)=>{
+                  const xOff=seed(b.id*3+7)*(120-24)+12;
+                  const yOff=seed(b.id*5+11)*(ZH-16)+8;
+                  return(
+                    <div key={b.id} style={{
+                      position:"absolute",left:xOff,top:yOff,
+                      width:8,height:8,borderRadius:"50%",
+                      background:DOT_COLORS[i],opacity:.85,zIndex:5,
+                      boxShadow:`0 0 6px ${DOT_COLORS[i]}AA`,
+                    }}/>
+                  );
+                })}
+              </div>
+            );
+          })}
+
+          {/* stumps + crease */}
+          <div style={{position:"absolute",left:"50%",marginLeft:-56,top:0,width:112,height:8,zIndex:4}}>
+            <div style={{position:"absolute",bottom:0,left:0,right:0,height:2,background:"rgba(255,255,255,.9)",borderRadius:1}}/>
+            {[0,1,2].map(s=>(
+              <div key={s} style={{position:"absolute",bottom:2,left:41+14*s,width:3,height:8,
+                background:"#3B82F6",borderRadius:"0 0 1px 1px",opacity:.9}}/>
+            ))}
+          </div>
+          {/* crease line at top */}
+          <div style={{position:"absolute",left:"50%",marginLeft:-66,top:6,width:132,height:1,
+            background:"rgba(255,255,255,.7)",zIndex:4}}/>
+          <div style={{position:"absolute",left:"50%",marginLeft:-62,top:8,width:124,height:1,
+            background:"rgba(255,255,255,.4)",zIndex:4}}/>
+
+          {/* center guideline */}
+          <div style={{position:"absolute",left:"50%",marginLeft:-.5,top:0,width:1,height:PITCH_H,
+            background:"rgba(100,140,180,.3)",zIndex:3}}/>
+
+          {/* zone labels on right side of pitch */}
+          {dist.map((d,i)=>{
+            const top=ZONES_TOP[i];
+            return(
+              <div key={d.zone} style={{position:"absolute",left:"50%",marginLeft:65,top:top+ZH/2-6,zIndex:6}}>
+                <div style={{fontSize:8,fontWeight:800,color:"#fff",letterSpacing:1,
+                  textShadow:"0 1px 3px rgba(0,0,0,.6)",lineHeight:1}}>
+                  {d.zone.toUpperCase()}
+                </div>
+                <div style={{fontSize:9,fontWeight:800,color:C.gold,
+                  textShadow:"0 1px 3px rgba(0,0,0,.6)",lineHeight:1.2}}>
+                  {d.pct}%
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // SPLASH
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -1189,6 +1335,7 @@ function SessionAnalysisPage({onNav}){
                       </div>
                     );
                   })}
+                  <PitchLengthChart balls={bws} role={st.role}/>
                 </div>
               )}
             </Card>
